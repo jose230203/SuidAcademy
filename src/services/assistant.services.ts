@@ -1,8 +1,11 @@
 // assistantService.ts
 import OpenAI from "openai";
+import type { Message as ThreadMessage } from "openai/resources/beta/threads/messages";
+
+type OpenAIClient = InstanceType<typeof OpenAI>;
 
 export class AssistantService {
-  private client: OpenAI;
+  private client: OpenAIClient;
   private assistantId: string;
 
   // Instrucciones por si es Academia, Curso, Leccion, Material
@@ -98,7 +101,7 @@ export class AssistantService {
     return new Promise((resolve, reject) => {
       let fullResponse = "";
 
-      stream.on('event', (event) => {
+  stream.on('event', (event: { event: string; data: any }) => {
         // Evento cuando se crea el 'run': útil para cancelaciones
         if (event.event === 'thread.run.created' && onRun) {
           onRun(event.data.id);
@@ -111,7 +114,7 @@ export class AssistantService {
               const token = content.text.value;
               fullResponse += token;
               // Llamar al callback con únicamente el texto
-              onToken(token as any);
+              onToken(token);
             }
           }
         }
@@ -121,13 +124,13 @@ export class AssistantService {
         resolve({ threadId: currentThreadId!, fullResponse });
       });
 
-      stream.on('error', (error) => {
+  stream.on('error', (error: unknown) => {
         console.error("Error en el stream:", error);
         reject(error);
       });
 
       // Manejo de tool_calls para evitar que el asistente se quede 'colgado'
-      stream.on('requires_action' as any, async (event: any) => {
+  stream.on('requires_action' as any, async (event: any) => {
         await this.client.beta.threads.runs.submitToolOutputs(
           event.data.thread_id,
           event.data.id,
@@ -137,7 +140,7 @@ export class AssistantService {
     });
   }
 
-  async getMessages(threadId: string, limit: number = 20): Promise<OpenAI.Beta.Threads.Messages.Message[]> {
+  async getMessages(threadId: string, limit: number = 20): Promise<ThreadMessage[]> {
     const messages = await this.client.beta.threads.messages.list(threadId, {
       order: "asc",
       limit,
