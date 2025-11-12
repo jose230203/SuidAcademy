@@ -1,11 +1,17 @@
 import express, { Application } from 'express';
 import cors from 'cors';
-import helmet from 'helmet';
+import helmetModule, { type HelmetOptions } from 'helmet';
 import morgan from 'morgan';
 import { setupSwagger } from './config/swagger.js';
 
 import routes from "./routes/index.js";
 const app: Application = express();
+
+// Normaliza exportaciones de Helmet entre entornos CJS y ESM
+type HelmetFn = (options?: Readonly<HelmetOptions>) => express.RequestHandler;
+const helmet: HelmetFn = typeof helmetModule === 'function'
+  ? (helmetModule as unknown as HelmetFn)
+  : (helmetModule as unknown as { default: HelmetFn }).default;
 
 // Middlewares globales
 app.use(helmet()); // Seguridad HTTP headers
