@@ -1,11 +1,9 @@
 // assistantService.ts
-import OpenAI from "openai";
+import { OpenAI } from "openai";
 import type { Message as ThreadMessage } from "openai/resources/beta/threads/messages";
 
-type OpenAIClient = InstanceType<typeof OpenAI>;
-
 export class AssistantService {
-  private client: OpenAIClient;
+  private client: OpenAI;
   private assistantId: string;
 
   // Instrucciones por si es Academia, Curso, Leccion, Material
